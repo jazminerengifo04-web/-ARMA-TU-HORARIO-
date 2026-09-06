@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horario de Cursos</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header class="encabezado">
+        <h1>¡Arma tu horario!</h1>
+        <p>Registra tus cursos y organiza tu tiempo.</p>
+    </header>
+
+    <main class="contenido">
+        <!--FORMULARIO//PANEL IZQUIERDO-->
+        <section class="panel">
+            <h2>Registrar Curso</h2>
+
+            <label for="nombre">Curso:</label>
+            <input type="text" id="nombre" placeholder="Lenguaje de Programación">
+
+            <label for="creditos">Créditos:</label>
+            <input type="number" id="creditos" min="1" max="10" value="3">
+
+            <h3>Sesiones:</h3>
+
+            <div class="fila sesion">
+                <select id ="dia">
+                    <option value="1">Lunes</option>
+                    <option value="2">Martes</option>
+                    <option value="3">Miércoles</option>
+                    <option value="4">Jueves</option>
+                    <option value="5">Viernes</option>
+                    <option value="6">Sábado</option>
+                    <option value="7">Domingo</option>
+                </select>
+                <input type="time" id ="inicio" value="08:00" step="900">
+                <input type="time" id ="fin" value="10:00" step="900">
+                <button id="btn-sesion" class="boton secundario">+</button>
+            </div>
+            <ul id="lista-borrador" class="lista-borrador"></ul>
+
+            <button id="btn-agregar" class="boton primario">Registrar nuevo curso</button>
+
+            <div id="mensaje" class="lista de cursos"></div>
+
+            <hr>
+            <h2>Cursos registrados</h2>
+            <ul id="lista-cursos" class="lista-cursos"></ul>
+            
+            <div id="resumen" class="resumen"></div>            
+        </section>
+
+        <!--TABLA DE HORARIO//PANEL DERECHO: grilla-->
+        <section class="panel panel-grilla">
+            <div class="grilla" id="grilla">
+                <div class="esquina"></div>
+                <div class="cabecera">Lunes</div>
+                <div class="cabecera">Martes</div>
+                <div class="cabecera">Miércoles</div>
+                <div class="cabecera">Jueves</div> 
+                <div class="cabecera">Viernes</div>
+                <div class="cabecera">Sábado</div>
+                <div class="cabecera">Domingo</div>
+                <div class="horas" id="horas"></div>
+                <div class="columna" data-dia="1"></div>
+                <div class="columna" data-dia="2"></div>    
+                <div class="columna" data-dia="3"></div>
+                <div class="columna" data-dia="4"></div>
+                <div class="columna" data-dia="5"></div>
+                <div class="columna" data-dia="6"></div>
+                <div class="columna" data-dia="7"></div>
+            </div>
+        </section>
+
+    </main>
+    
+    <script src="app.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,20 @@
+[
+{
+        
+    "id": 1,
+    "nombre": "Curso de Python",
+    "creditos": 3,
+    "sesiones": [
+        {"dia": 1, "inicio":960, "fin": "1080"},
+        {"dia": 3, "inicio":960, "fin": "1080"},
+        {"dia": 5, "inicio":960, "fin": "1080"},
+        {"dia": 7, "inicio":960, "fin": "1080"},
+        {"dia": 9, "inicio":960, "fin": "1080"},
+        {"dia": 11, "inicio":960, "fin": "1080"},
+        {"dia": 13, "inicio":960, "fin": "1080"},
+        {"dia": 15, "inicio":960, "fin": "1080"},
+        {"dia": 17, "inicio":960, "fin": "1080"},
+        {"dia": 19, "inicio":960, "fin": "1080"}
+    ]
+}
+]

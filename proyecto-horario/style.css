@@ -1,0 +1,254 @@
+/* ============================================================
+   Armador de Horarios — hoja de estilos
+   Diseñado para pantallas de 1366x768 en adelante
+   ============================================================ */
+ 
+:root {
+  --azul: #631f79;
+  --gris-borde: #d6dbe1;
+  --gris-fondo: #f4f6f8;
+  --texto: #22282e;
+  --rojo: #c0392b;
+  --verde: #1e7a4d;
+  --alto-hora: 42px;   /* 60 minutos * 0.7 px por minuto */
+}
+ 
+*{box-sizing:border-box; }
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+    font-size: 14px;
+    color: var(--texto);
+    background: var(--gris-fondo);
+}
+
+/* ============================================================
+   Encabezado
+   ============================================================ */
+.encabezado{
+    background: var(--azul);
+    color: #fff;
+    padding: 14px 24px;
+}
+.encabezado h1{margin: 0; font-size: 20px; font-weight: 600;}
+.encabezado h2{margin: 2px 0 0; font-size: 13px; opacity: .8;}
+
+/* ============================================================
+   DISPONIBILIDAD DE HORARIOS
+   ============================================================ */
+.contenido{
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 16px 24px;
+    align-items: start;
+}
+
+.panel{
+    background: #fff;
+    border: 1px solid var(--gris-borde);
+    border-radius: 6px;
+    padding: 16px;
+}
+
+.panel h2{
+    margin: 0 0 12px;
+    font-size: 15px;
+    color: var(--azul);
+}
+
+.panel h3{
+    margin: 0 0 8px;
+    font-size: 13px;
+    color: var(#55606b);
+}
+
+.panel hr{
+    border: 0;
+    border-top: 1px solid var(--gris-borde);
+    margin: 18px 0;
+}
+
+/* ============================================================
+   Formulario de selección de horarios
+   ============================================================ */  
+label {
+  display: block;
+  font-size: 14px;
+  color: #55606b;
+  margin-bottom: 6px;
+}
+
+input, select{
+    width: 100%;        
+    padding: 6px 8px;
+    margin-bottom: 10px;
+    border: 1px solid var(--gris-borde);
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: inherit;
+}
+
+input:focus, select:focus{
+    outline: 2px solid #9dc3e6;
+    border-color: var(--azul);
+}
+
+.fila.sesion{
+    display: grid;
+    grid-template-columns: 1fr 78px 78px 32px;
+    gap: 6px;
+    align-items: start;
+}
+
+.fila.sesion input, .fila.sesion select { margin-bottom: 8px; }
+ 
+.boton {
+  cursor: pointer;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 13px;
+  border: 1px solid var(--azul);
+}
+.boton.primario {
+  width: 100%;
+  padding: 9px;
+  background: var(--azul);
+  color: #fff;
+  font-weight: 600;
+  margin-top: 6px;
+}
+
+.boton.primario:hover { background: #163d5f; }
+.boton.secundario {
+  padding: 6px 0;
+  background: #fff;
+  color: var(--azul);
+  font-weight: 700;
+}
+.boton.secundario:hover { background: #eaf1f8; }
+/* ------------------- Listas (borrador y cursos) ---------------- */
+.lista-borrador, .lista-cursos { list-style: none; margin: 0; padding: 0; }
+ 
+.lista-borrador li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--gris-fondo);
+  border-radius: 4px;
+  padding: 5px 8px;
+  margin-bottom: 5px;
+  font-size: 12px;
+}
+.lista-cursos li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-left: 4px solid #ccc;
+  padding: 6px 8px;
+  margin-bottom: 6px;
+  background: var(--gris-fondo);
+  border-radius: 0 4px 4px 0;
+}
+.lista-cursos .info { font-size: 12px; line-height: 1.4; }
+.lista-cursos .info strong { display: block; font-size: 13px; }
+.lista-cursos .info span { color: #6b757e; }
+ 
+.quitar {
+  border: 0;
+  background: transparent;
+  color: var(--rojo);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 4px;
+}
+ 
+/* ------------------------- Mensajes --------------------------- */
+.mensaje { font-size: 12px; margin-top: 10px; line-height: 1.4; }
+.mensaje.error   { color: var(--rojo); }
+.mensaje.exito   { color: var(--verde); }
+ 
+.resumen {
+  margin-top: 12px;
+  padding: 10px;
+  background: var(--gris-fondo);
+  border-radius: 4px;
+  font-size: 13px;
+}
+.resumen.excedido { background: #fdecea; color: var(--rojo); font-weight: 600; }
+ 
+/* ------------------------- Grilla ----------------------------- */
+.grilla {
+  display: grid;
+  grid-template-columns: 56px repeat(7, 1fr);
+  grid-template-rows: auto 630px;   /* 900 minutos * 0.7 px */
+  border: 1px solid var(--gris-borde);
+  border-radius: 4px;
+  overflow: hidden;
+}
+ 
+.esquina, .cabecera {
+  background: #eef2f6;
+  border-bottom: 1px solid var(--gris-borde);
+  padding: 8px 0;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #46505a;
+}
+.cabecera { border-left: 1px solid var(--gris-borde); }
+ 
+.horas { position: relative; background: #fafbfc; }
+.horas .marca {
+  position: absolute;
+  right: 6px;
+  font-size: 11px;
+  color: #8a949d;
+  transform: translateY(-6px);
+}
+ 
+.columna {
+  position: relative;
+  border-left: 1px solid var(--gris-borde);
+  background: repeating-linear-gradient(
+    to bottom,
+    #fff 0,
+    #fff calc(var(--alto-hora) - 1px),
+    var(--gris-borde) var(--alto-hora)
+  );
+}
+ 
+/* ------------------------- Bloques ---------------------------- */
+.bloque {
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  border-radius: 4px;
+  padding: 3px 5px;
+  color: #fff;
+  font-size: 11px;
+  line-height: 1.25;
+  overflow: hidden;
+}
+.bloque strong { display: block; font-weight: 600; }
+.bloque small  { opacity: .85; }
+ 
+.bloque.conflicto {
+  outline: 3px solid var(--rojo);
+  animation: parpadeo 0.6s ease-in-out 3;
+}
+@keyframes parpadeo {
+  50% { outline-color: transparent; }
+}
+ 
+/* ------------------------- Impresión -------------------------- */
+@media print {
+  .panel:first-child, .encabezado p { display: none; }
+  .contenido { grid-template-columns: 1fr; }
+  body { background: #fff; }
+}
+
+ 
+
+
