@@ -21,8 +21,8 @@
             <label for="nombre">Curso:</label>
             <input type="text" id="nombre" placeholder="Lenguaje de Programación">
 
-            <label for="creditos">Créditos:</label>
-            <input type="number" id="creditos" min="1" max="10" value="3">
+            <label for="docente">Docente:</label>
+            <input type="text" id="docente" placeholder="Nombre del docente">
 
             <h3>Sesiones:</h3>
 
@@ -43,6 +43,7 @@
             <ul id="lista-borrador" class="lista-borrador"></ul>
 
             <button id="btn-agregar" class="boton primario">Registrar nuevo curso</button>
+            <button id="btn-cancelar-edicion" class="boton cancelar" hidden>Cancelar edición</button>
 
             <div id="mensaje" class="lista de cursos"></div>
 
@@ -50,7 +51,8 @@
             <h2>Cursos registrados</h2>
             <ul id="lista-cursos" class="lista-cursos"></ul>
             
-            <div id="resumen" class="resumen"></div>            
+            <div id="resumen" class="resumen"></div>
+            <button id="btn-eliminar-todos" class="boton peligro">Eliminar todos los cursos</button>
         </section>
 
         <!--TABLA DE HORARIO//PANEL DERECHO: grilla-->

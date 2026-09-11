@@ -7,8 +7,6 @@ const DIAS = ["", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado
 const HORA_INICIO   = 7 * 60;    // 07:00 expresado en minutos
 const HORA_FIN      = 22 * 60;   // 22:00 expresado en minutos
 const PX_POR_MINUTO = 0.7;       // debe coincidir con --alto-hora del CSS
-const TOPE_CREDITOS = 22;
- 
 const PALETA = ["#2E86AB", "#A23B72", "#F18F01", "#3B7A57",
                 "#6A4C93", "#C1666B", "#1B998B", "#8D6E63"];
  
@@ -44,7 +42,8 @@ let estado = {
   cursos:    [],     // cursos ya registrados en el horario
   borrador:  [],     // sesiones del curso que se está armando
   mensaje:   null,   // { texto, tipo }
-  conflicto: null    // { curso, sesion } para resaltar en la grilla
+  conflicto: null,   // { curso, sesion } para resaltar en la grilla
+  editandoId: null   // id del curso que se está editando
 };
 
 /* ============================================================
@@ -85,10 +84,6 @@ function conflictoInterno(sesiones) {
   return null;
 }
  
-function totalCreditos() {
-  return estado.cursos.reduce((suma, curso) => suma + curso.creditos, 0);
-}
- 
 function siguienteId() {
   return estado.cursos.reduce((max, curso) => Math.max(max, curso.id), 0) + 1;
 }
@@ -127,12 +122,34 @@ function dibujarGrilla() {
       if (!columna) continue;
  
       const bloque = crear("div", "bloque");
+      bloque.dataset.cursoId = curso.id;
       bloque.style.top       = (sesion.inicio - HORA_INICIO) * PX_POR_MINUTO + "px";
       bloque.style.height    = (sesion.fin - sesion.inicio) * PX_POR_MINUTO - 2 + "px";
       bloque.style.backgroundColor = curso.color;
  
+      const horario = crear("small", null, aTexto(sesion.inicio) + "–" + aTexto(sesion.fin));
+      const ajusteInicio = crear("span", "control-ajuste superior", "");
+      ajusteInicio.title = "Ajustar hora de inicio";
+      ajusteInicio.addEventListener("pointerdown", evento => {
+        evento.stopPropagation();
+        iniciarAjusteInicio(evento, curso, sesion, bloque, horario);
+      });
+      bloque.appendChild(ajusteInicio);
       bloque.appendChild(crear("strong", null, curso.nombre));
-      bloque.appendChild(crear("small", null, aTexto(sesion.inicio) + "–" + aTexto(sesion.fin)));
+      bloque.appendChild(horario);
+
+      const ajuste = crear("span", "control-ajuste", "");
+      ajuste.title = "Ajustar hora de finalización";
+      ajuste.addEventListener("pointerdown", evento => {
+        evento.stopPropagation();
+        iniciarAjuste(evento, curso, sesion, bloque, horario);
+      });
+      bloque.appendChild(ajuste);
+      bloque.addEventListener("pointerdown", evento => {
+        if (!evento.target.closest(".control-ajuste")) {
+          iniciarMovimiento(evento, curso, sesion, bloque, horario);
+        }
+      });
  
       if (estado.conflicto &&
           estado.conflicto.curso.id === curso.id &&
@@ -143,6 +160,167 @@ function dibujarGrilla() {
       columna.appendChild(bloque);
     }
   }
+}
+
+function redondearCuarto(minutos) {
+  return Math.round(minutos / 15) * 15;
+}
+
+function columnaEn(x) {
+  return [...document.querySelectorAll(".columna")].find(columna => {
+    const rect = columna.getBoundingClientRect();
+    return x >= rect.left && x <= rect.right;
+  });
+}
+
+function sesionEnConflicto(cursoActual, sesionOriginal, candidata) {
+  for (const curso of estado.cursos) {
+    for (const sesion of curso.sesiones) {
+      if (curso === cursoActual && sesion === sesionOriginal) continue;
+      if (seCruzan(candidata, sesion)) return curso;
+    }
+  }
+  return null;
+}
+
+function finalizarCambio(evento, curso, sesion, candidata, bloque) {
+  const cambio = candidata.dia !== sesion.dia ||
+    candidata.inicio !== sesion.inicio || candidata.fin !== sesion.fin;
+
+  bloque.releasePointerCapture(evento.pointerId);
+  bloque.classList.remove("moviendose");
+
+  if (!cambio) {
+    render();
+    return;
+  }
+
+  const cursoEnConflicto = sesionEnConflicto(curso, sesion, candidata);
+  if (cursoEnConflicto) {
+    avisar("No se puede cambiar: el horario choca con " + cursoEnConflicto.nombre + ".", "error");
+    render();
+    return;
+  }
+
+  if (!confirm("Quiere cambiar el horario?")) {
+    render();
+    return;
+  }
+
+  sesion.dia = candidata.dia;
+  sesion.inicio = candidata.inicio;
+  sesion.fin = candidata.fin;
+  estado.conflicto = null;
+  avisar("El horario fue actualizado.", "exito");
+  guardar();
+  render();
+}
+
+function iniciarMovimiento(evento, curso, sesion, bloque, horario) {
+  if (evento.button !== 0) return;
+  evento.preventDefault();
+
+  const inicioX = evento.clientX;
+  const inicioY = evento.clientY;
+  const duracion = sesion.fin - sesion.inicio;
+  const candidata = { ...sesion };
+  bloque.classList.add("moviendose");
+  bloque.setPointerCapture(evento.pointerId);
+
+  const mover = movimiento => {
+    const columna = columnaEn(movimiento.clientX);
+    const dia = columna ? Number(columna.dataset.dia) : candidata.dia;
+    const inicio = Math.max(
+      HORA_INICIO,
+      Math.min(HORA_FIN - duracion,
+        redondearCuarto(sesion.inicio + (movimiento.clientY - inicioY) / PX_POR_MINUTO))
+    );
+
+    candidata.dia = dia;
+    candidata.inicio = inicio;
+    candidata.fin = inicio + duracion;
+    bloque.style.top = (inicio - HORA_INICIO) * PX_POR_MINUTO + "px";
+    bloque.style.height = duracion * PX_POR_MINUTO - 2 + "px";
+    horario.textContent = aTexto(inicio) + "–" + aTexto(candidata.fin);
+  };
+
+  const terminar = movimiento => {
+    bloque.removeEventListener("pointermove", mover);
+    bloque.removeEventListener("pointerup", terminar);
+    bloque.removeEventListener("pointercancel", terminar);
+    finalizarCambio(movimiento, curso, sesion, candidata, bloque);
+  };
+
+  bloque.addEventListener("pointermove", mover);
+  bloque.addEventListener("pointerup", terminar);
+  bloque.addEventListener("pointercancel", terminar);
+}
+
+function iniciarAjuste(evento, curso, sesion, bloque, horario) {
+  if (evento.button !== 0) return;
+  evento.preventDefault();
+
+  const inicioY = evento.clientY;
+  const candidata = { ...sesion };
+  bloque.classList.add("ajustando");
+  bloque.setPointerCapture(evento.pointerId);
+
+  const mover = movimiento => {
+    const fin = Math.max(
+      sesion.inicio + 15,
+      Math.min(HORA_FIN,
+        redondearCuarto(sesion.fin + (movimiento.clientY - inicioY) / PX_POR_MINUTO))
+    );
+    candidata.fin = fin;
+    bloque.style.height = (fin - sesion.inicio) * PX_POR_MINUTO - 2 + "px";
+    horario.textContent = aTexto(sesion.inicio) + "–" + aTexto(fin);
+  };
+
+  const terminar = movimiento => {
+    bloque.classList.remove("ajustando");
+    bloque.removeEventListener("pointermove", mover);
+    bloque.removeEventListener("pointerup", terminar);
+    bloque.removeEventListener("pointercancel", terminar);
+    finalizarCambio(movimiento, curso, sesion, candidata, bloque);
+  };
+
+  bloque.addEventListener("pointermove", mover);
+  bloque.addEventListener("pointerup", terminar);
+  bloque.addEventListener("pointercancel", terminar);
+}
+
+function iniciarAjusteInicio(evento, curso, sesion, bloque, horario) {
+  if (evento.button !== 0) return;
+  evento.preventDefault();
+
+  const inicioY = evento.clientY;
+  const candidata = { ...sesion };
+  bloque.classList.add("ajustando");
+  bloque.setPointerCapture(evento.pointerId);
+
+  const mover = movimiento => {
+    const inicio = Math.max(
+      HORA_INICIO,
+      Math.min(sesion.fin - 15,
+        redondearCuarto(sesion.inicio + (movimiento.clientY - inicioY) / PX_POR_MINUTO))
+    );
+    candidata.inicio = inicio;
+    bloque.style.top = (inicio - HORA_INICIO) * PX_POR_MINUTO + "px";
+    bloque.style.height = (sesion.fin - inicio) * PX_POR_MINUTO - 2 + "px";
+    horario.textContent = aTexto(inicio) + "–" + aTexto(sesion.fin);
+  };
+
+  const terminar = movimiento => {
+    bloque.classList.remove("ajustando");
+    bloque.removeEventListener("pointermove", mover);
+    bloque.removeEventListener("pointerup", terminar);
+    bloque.removeEventListener("pointercancel", terminar);
+    finalizarCambio(movimiento, curso, sesion, candidata, bloque);
+  };
+
+  bloque.addEventListener("pointermove", mover);
+  bloque.addEventListener("pointerup", terminar);
+  bloque.addEventListener("pointercancel", terminar);
 }
  
 function dibujarBorrador() {
@@ -177,22 +355,29 @@ function dibujarListaDeCursos() {
     const info = crear("div", "info");
     info.appendChild(crear("strong", null, curso.nombre));
     info.appendChild(crear("span", null,
-      curso.creditos + " créditos · " + curso.sesiones.map(describir).join(" | ")));
+      "Docente: " + (curso.docente || "No indicado") + " · " +
+      curso.sesiones.map(describir).join(" | ")));
     item.appendChild(info);
  
+    const acciones = crear("div", "acciones-curso");
+
     const boton = crear("button", "quitar", "×");
     boton.onclick = () => eliminarCurso(curso.id);
-    item.appendChild(boton);
+    acciones.appendChild(boton);
+
+    const editar = crear("button", "editar", "✎ Editar");
+    editar.onclick = () => iniciarEdicion(curso.id);
+    acciones.appendChild(editar);
+    item.appendChild(acciones);
  
     lista.appendChild(item);
   }
 }
  
 function dibujarResumen() {
-  const total = totalCreditos();
   const resumen = $("#resumen");
-  resumen.textContent = "Total: " + total + " de " + TOPE_CREDITOS + " créditos";
-  resumen.className = total > TOPE_CREDITOS ? "resumen excedido" : "resumen";
+  resumen.textContent = "Cursos registrados: " + estado.cursos.length;
+  resumen.className = "resumen";
 }
  
 function dibujarMensaje() {
@@ -247,33 +432,47 @@ function quitarSesionDelBorrador(indice) {
  
 function agregarCurso() {
   const nombre   = $("#nombre").value.trim();
-  const creditos = Number($("#creditos").value);
+  const docente  = $("#docente").value.trim();
  
   estado.conflicto = null;
  
   if (nombre === "") {
     avisar("El curso necesita un nombre.", "error");
-  } else if (!Number.isInteger(creditos) || creditos <= 0) {
-    avisar("Los créditos deben ser un número entero mayor que cero.", "error");
+  } else if (docente === "") {
+    avisar("El curso necesita un docente.", "error");
   } else if (estado.borrador.length === 0) {
     avisar("Agrega al menos una sesión con el botón +.", "error");
   } else {
-    const choque = buscarConflicto(estado.borrador, estado.cursos);
+    const cursosParaComparar = estado.cursos.filter(curso => curso.id !== estado.editandoId);
+    const choque = buscarConflicto(estado.borrador, cursosParaComparar);
  
     if (choque) {
       estado.conflicto = { curso: choque.curso, sesion: choque.sesion };
       avisar("Choca con " + choque.curso.nombre + " el " + describir(choque.sesion) +
              ". Tu sesión sería " + describir(choque.propia) + ".", "error");
     } else {
-      estado.cursos.push({
-        id:       siguienteId(),
+      const cursoActualizado = {
+        id:       estado.editandoId === null ? siguienteId() : estado.editandoId,
         nombre:   nombre,
-        creditos: creditos,
-        color:    PALETA[estado.cursos.length % PALETA.length],
+        docente:  docente,
+        color:    estado.editandoId === null
+          ? PALETA[estado.cursos.length % PALETA.length]
+          : estado.cursos.find(curso => curso.id === estado.editandoId).color,
         sesiones: estado.borrador
-      });
+      };
+      if (estado.editandoId === null) {
+        estado.cursos.push(cursoActualizado);
+      } else {
+        estado.cursos = estado.cursos.map(curso =>
+          curso.id === estado.editandoId ? cursoActualizado : curso
+        );
+      }
       estado.borrador = [];
+      estado.editandoId = null;
       $("#nombre").value = "";
+      $("#docente").value = "";
+      $("#btn-agregar").textContent = "Registrar nuevo curso";
+      $("#btn-cancelar-edicion").hidden = true;
       avisar(nombre + " se agregó al horario.", "exito");
       guardar();
     }
@@ -286,6 +485,55 @@ function eliminarCurso(id) {
   estado.cursos  = estado.cursos.filter(curso => curso.id !== id);
   estado.conflicto = null;
   estado.mensaje   = null;
+  guardar();
+  render();
+}
+
+function iniciarEdicion(id) {
+  const curso = estado.cursos.find(item => item.id === id);
+  if (!curso) return;
+
+  estado.editandoId = id;
+  estado.borrador = curso.sesiones.map(sesion => ({ ...sesion }));
+  estado.conflicto = null;
+  estado.mensaje = null;
+  $("#nombre").value = curso.nombre;
+  $("#docente").value = curso.docente || "";
+  $("#btn-agregar").textContent = "Actualizar curso";
+  $("#btn-cancelar-edicion").hidden = false;
+  render();
+}
+
+function cancelarEdicion() {
+  estado.editandoId = null;
+  estado.borrador = [];
+  estado.conflicto = null;
+  estado.mensaje = null;
+  $("#nombre").value = "";
+  $("#docente").value = "";
+  $("#btn-agregar").textContent = "Registrar nuevo curso";
+  $("#btn-cancelar-edicion").hidden = true;
+  render();
+}
+
+function eliminarTodosLosCursos() {
+  if (estado.cursos.length === 0) {
+    avisar("No hay cursos registrados para eliminar.", "error");
+    render();
+    return;
+  }
+
+  if (!confirm("¿Seguro que deseas eliminar todos los cursos?")) return;
+
+  estado.cursos = [];
+  estado.borrador = [];
+  estado.editandoId = null;
+  estado.conflicto = null;
+  $("#nombre").value = "";
+  $("#docente").value = "";
+  $("#btn-agregar").textContent = "Registrar nuevo curso";
+  $("#btn-cancelar-edicion").hidden = true;
+  avisar("Todos los cursos fueron eliminados.", "exito");
   guardar();
   render();
 }
@@ -305,7 +553,12 @@ function guardar() {
 function cargar() {
   try {
     const guardado = localStorage.getItem(CLAVE_ALMACEN);
-    if (guardado) estado.cursos = JSON.parse(guardado);
+    if (guardado) {
+      estado.cursos = JSON.parse(guardado).map(curso => ({
+        ...curso,
+        docente: curso.docente || ""
+      }));
+    }
   } catch (error) {
     console.warn("No se pudo leer el horario guardado:", error);
     estado.cursos = [];
@@ -322,6 +575,8 @@ render();
  
 $("#btn-sesion").onclick  = agregarSesionAlBorrador;
 $("#btn-agregar").onclick = agregarCurso;
+$("#btn-cancelar-edicion").onclick = cancelarEdicion;
+$("#btn-eliminar-todos").onclick = eliminarTodosLosCursos;
 
 const casos = [
   ["Días distintos",          {dia:1,inicio:480,fin:600}, {dia:2,inicio:480,fin:600}, false],

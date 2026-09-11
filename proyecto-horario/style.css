@@ -127,6 +127,23 @@ input:focus, select:focus{
   font-weight: 700;
 }
 .boton.secundario:hover { background: #eaf1f8; }
+.boton.cancelar {
+  width: 100%;
+  padding: 7px;
+  margin-top: 6px;
+  background: #fff;
+  color: var(--texto);
+  border-color: var(--gris-borde);
+}
+.boton.cancelar:hover { background: var(--gris-fondo); }
+.boton.peligro {
+  padding: 7px 10px;
+  margin-top: 10px;
+  background: #fff;
+  color: var(--rojo);
+  border-color: var(--rojo);
+}
+.boton.peligro:hover { background: #fdecea; }
 /* ------------------- Listas (borrador y cursos) ---------------- */
 .lista-borrador, .lista-cursos { list-style: none; margin: 0; padding: 0; }
  
@@ -141,9 +158,9 @@ input:focus, select:focus{
   font-size: 12px;
 }
 .lista-cursos li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 5px;
   border-left: 4px solid #ccc;
   padding: 6px 8px;
   margin-bottom: 6px;
@@ -153,16 +170,36 @@ input:focus, select:focus{
 .lista-cursos .info { font-size: 12px; line-height: 1.4; }
 .lista-cursos .info strong { display: block; font-size: 13px; }
 .lista-cursos .info span { color: #6b757e; }
+
+.acciones-curso {
+  display: flex;
+  justify-self: end;
+  align-items: center;
+  gap: 4px;
+}
  
 .quitar {
-  border: 0;
-  background: transparent;
+  border: 1px solid #e0a9a3;
+  background: #fff;
+  border-radius: 3px;
   color: var(--rojo);
   cursor: pointer;
   font-size: 16px;
   line-height: 1;
-  padding: 0 4px;
+  padding: 3px 7px;
 }
+.quitar:hover { background: #fdecea; }
+
+.editar {
+  border: 1px solid #b5bbc1;
+  background: #f5f6f7;
+  border-radius: 3px;
+  color: var(--azul);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px 9px;
+}
+.editar:hover { background: #fff; }
  
 /* ------------------------- Mensajes --------------------------- */
 .mensaje { font-size: 12px; margin-top: 10px; line-height: 1.4; }
@@ -199,13 +236,29 @@ input:focus, select:focus{
 }
 .cabecera { border-left: 1px solid var(--gris-borde); }
  
-.horas { position: relative; background: #fafbfc; }
+.horas {
+  position: relative;
+  background: #fafbfc;
+  border-right: 1px solid var(--gris-borde);
+  overflow: hidden;
+}
 .horas .marca {
   position: absolute;
-  right: 6px;
+  left: 0;
+  right: 0;
+  height: var(--alto-hora);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid var(--gris-borde);
   font-size: 11px;
   color: #8a949d;
-  transform: translateY(-6px);
+  background: #fafbfc;
+}
+.horas .marca:last-child {
+  height: 0;
+  border-bottom: 0;
+  transform: translateY(-50%);
 }
  
 .columna {
@@ -230,9 +283,28 @@ input:focus, select:focus{
   font-size: 11px;
   line-height: 1.25;
   overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
 }
+.bloque:active { cursor: grabbing; }
+.bloque.moviendose, .bloque.ajustando { opacity: .82; }
 .bloque strong { display: block; font-weight: 600; }
 .bloque small  { opacity: .85; }
+.control-ajuste {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 8px;
+  cursor: ns-resize;
+  background: rgba(255, 255, 255, .28);
+}
+.control-ajuste:hover { background: rgba(255, 255, 255, .55); }
+.control-ajuste.superior {
+  top: 0;
+  bottom: auto;
+}
  
 .bloque.conflicto {
   outline: 3px solid var(--rojo);
